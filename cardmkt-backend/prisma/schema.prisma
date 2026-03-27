@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Game {
+  mtg
+  yugioh
+}
+
+enum Condition {
+  NM
+  LP
+  MP
+  HP
+  DMG
+}
+
+enum Language {
+  EN
+  ES
+  JP
+}
+
+enum ListingStatus {
+  active
+  sold
+  paused
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  delivered
+  disputed
+}
+
+enum UserRole {
+  buyer
+  seller
+  admin
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String
+  phone      String?
+  city       String?
+  role       UserRole @default(buyer)
+  password   String
+  rating     Float    @default(0)
+  totalSales Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  listings      Listing[]
+  buyerOrders   Order[]   @relation("BuyerOrders")
+  sellerOrders  Order[]   @relation("SellerOrders")
+}
+
+model Card {
+  id           Int      @id @default(autoincrement())
+  game         Game
+  name         String
+  setCode      String
+  setName      String
+  rarity       String
+  imageUrl     String?
+  tcgplayerId  String?  @unique
+  scryfallId   String?  @unique
+  ygoprodeckId String?  @unique
+  createdAt    DateTime @default(now())
+
+  prices   CardPrice?
+  listings Listing[]
+
+  @@index([game])
+  @@index([name])
+}
+
+model CardPrice {
+  id           Int      @id @default(autoincrement())
+  cardId       Int      @unique
+  card         Card     @relation(fields: [cardId], references: [id])
+  priceLow     Float
+  priceMid     Float
+  priceMarket  Float
+  priceHigh    Float
+  currency     String   @default("USD")
+  updatedAt    DateTime @updatedAt
+}
+
+model Listing {
+  id         Int           @id @default(autoincrement())
+  sellerId   Int
+  seller     User          @relation(fields: [sellerId], references: [id])
+  cardId     Int
+  card       Card          @relation(fields: [cardId], references: [id])
+  condition  Condition
+  language   Language      @default(EN)
+  quantity   Int           @default(1)
+  priceCop   Float
+  status     ListingStatus @default(active)
+  photos     String[]
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([cardId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  buyerId         Int
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId        Int
+  seller          User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  status          OrderStatus @default(pending)
+  totalCop        Float
+  shippingMethod  String?
+  shippingAddress String?
+  wompiTxId       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items    OrderItem[]
+}
+
+model OrderItem {
+  id               Int     @id @default(autoincrement())
+  orderId          Int
+  order            Order   @relation(fields: [orderId], references: [id])
+  listingId        Int
+  listing          Listing @relation(fields: [listingId], references: [id])
+  quantity         Int
+  priceAtPurchase  Float
+}
