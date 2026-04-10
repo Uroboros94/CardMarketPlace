@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("postgresql://postgres:DNqWDdMnzWOXYztZlOfdMCxyjNxgANuT@postgres.railway.internal:5432/railway")
+  url      = env("DATABASE_URL")
 }
 
 enum Game {
