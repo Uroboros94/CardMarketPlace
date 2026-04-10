@@ -24,7 +24,13 @@ export async function authRoutes(app: FastifyInstance) {
 
     const hashed = await bcrypt.hash(body.password, 10);
     const user = await db.user.create({
-      data: { ...body, password: hashed },
+      data: {
+        email: body.email,       // ← explícito, no spread
+        password: hashed,
+        name: body.name,
+        city: body.city,
+        phone: body.phone,
+      },
       select: { id: true, email: true, name: true, city: true, role: true },
     });
 
@@ -47,12 +53,24 @@ export async function authRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/auth/me", { preHandler: async (req, reply) => { try { await req.jwtVerify(); } catch { reply.code(401).send({ error: "Unauthorized" }); } } }, async (req, reply) => {
-    const { id } = req.user as { id: number };
-    const user = await db.user.findUnique({
-      where: { id },
-      select: { id: true, email: true, name: true, city: true, role: true, rating: true, totalSales: true },
-    });
-    return reply.send(user);
-  });
+  app.get(
+    "/auth/me",
+    {
+      preHandler: async (req, reply) => {
+        try {
+          await req.jwtVerify();
+        } catch {
+          reply.code(401).send({ error: "Unauthorized" });
+        }
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.user as { id: number };
+      const user = await db.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, name: true, city: true, role: true, rating: true, totalSales: true },
+      });
+      return reply.send(user);
+    }
+  );
 }
