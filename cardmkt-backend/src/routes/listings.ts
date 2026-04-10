@@ -37,8 +37,21 @@ export async function listingsRoutes(app: FastifyInstance) {
     const body = createSchema.parse(req.body);
 
     const listing = await db.listing.create({
-      data: { ...body, sellerId: user.id },
-      include: { seller: { select: { id: true, name: true, city: true, rating: true, totalSales: true } } },
+      data: {
+        // ← campos explícitos en lugar de ...body + sellerId
+        // Prisma no acepta mezclar spread con campos de relación
+        sellerId: user.id,
+        cardId: body.cardId,
+        condition: body.condition,
+        language: body.language,
+        quantity: body.quantity,
+        priceCop: body.priceCop,
+        notes: body.notes,
+        photos: body.photos,
+      },
+      include: {
+        seller: { select: { id: true, name: true, city: true, rating: true, totalSales: true } },
+      },
     });
     return reply.code(201).send(listing);
   });
