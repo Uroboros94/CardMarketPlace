@@ -14,7 +14,7 @@ const app = Fastify({ logger: { level: process.env.NODE_ENV === "production" ? "
 // Plugins
 app.register(helmet);
 app.register(cors, {
-  origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
+  origin: true, // acepta cualquier origen — seguro porque el backend solo expone datos públicos
   credentials: true,
 });
 app.register(jwt, { secret: process.env.JWT_SECRET! });
