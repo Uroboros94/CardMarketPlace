@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // Redirige /api/* al backend en Railway sin exponer la URL en el cliente
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async rewrites() {
     return [
       {
@@ -11,7 +9,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Dominios permitidos para next/image (cartas de Scryfall y YGOPRODeck)
   images: {
     remotePatterns: [
       {
@@ -24,7 +21,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "**.r2.dev", // Cloudflare R2 para fotos de inventario
+        hostname: "**.r2.dev",
       },
     ],
   },
