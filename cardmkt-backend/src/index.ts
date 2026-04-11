@@ -11,10 +11,21 @@ import { schedulePriceSync } from "./jobs/priceSync";
 
 const app = Fastify({ logger: { level: process.env.NODE_ENV === "production" ? "warn" : "info" } });
 
+// Orígenes permitidos — agrega más separados por coma en FRONTEND_URL si es necesario
+const allowedOrigins = [
+  process.env.FRONTEND_URL ?? "http://localhost:3000",
+  "http://localhost:3000",
+];
+
 // Plugins
 app.register(helmet);
 app.register(cors, {
-  origin: true, // acepta cualquier origen — seguro porque el backend solo expone datos públicos
+  origin: (origin, cb) => {
+    // Permitir peticiones sin origen (ej: Railway healthcheck, Postman)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origen no permitido: ${origin}`), false);
+  },
   credentials: true,
 });
 app.register(jwt, { secret: process.env.JWT_SECRET! });
