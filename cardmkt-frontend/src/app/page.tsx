@@ -78,7 +78,7 @@ export default function HomePage() {
       {/* Stats bar */}
       <div className="flex items-center gap-3 mb-5">
         <span className="text-sm text-[#4a5f7a]">
-          {data?.total ?? 0} cartas · {data?.data.reduce((s, c) => s + (c as any).listingCount ?? 0, 0)} ofertas activas
+          {data?.total ?? 0} cartas · {data?.data.reduce((s, c) => s + ((c as any).listingCount ?? 0), 0)} ofertas activas
         </span>
         <div className="flex-1 h-px bg-[#1e2d45]" />
         <span className="text-xs text-[#4a5f7a] font-display">TRM: $3,762 COP/USD</span>
