@@ -17,14 +17,12 @@ const createCardSchema = z.object({
   name: z.string().min(1),
   setCode: z.string().min(1),
   setName: z.string().min(1),
-  rarity: z.string().optional(),
+  rarity: z.string().min(1),          // requerido en el schema
   imageUrl: z.string().url().optional(),
   collectorNumber: z.string().optional(),
-});
-
-const updatePriceSchema = z.object({
-  priceCop: z.number().positive(),
-  condition: z.enum(["NM", "LP", "MP", "HP", "DMG"]).default("NM"),
+  tcgplayerId: z.string().optional(),
+  scryfallId: z.string().optional(),
+  ygoprodeckId: z.string().optional(),
 });
 
 export async function cardsRoutes(app: FastifyInstance) {
@@ -62,7 +60,6 @@ export async function cardsRoutes(app: FastifyInstance) {
       return {
         ...c,
         listingCount: c.listings.length,
-        // Precios calculados desde los listings activos
         priceMin: prices.length > 0 ? Math.min(...prices) : null,
         priceMax: prices.length > 0 ? Math.max(...prices) : null,
         priceAvg: prices.length > 0
@@ -77,12 +74,14 @@ export async function cardsRoutes(app: FastifyInstance) {
 
   // GET /cards/:id — detalle público con listings activos
   app.get<{ Params: { id: string } }>("/cards/:id", async (req, reply) => {
-    const cacheKey = `card:${req.params.id}`;
+    const id = Number(req.params.id);  // Int en el schema
+    const cacheKey = `card:${id}`;
+
     const cached = await redis.get(cacheKey);
     if (cached) return reply.send(JSON.parse(cached));
 
     const card = await db.card.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         listings: {
           where: { status: "active", quantity: { gt: 0 } },
@@ -117,9 +116,23 @@ export async function cardsRoutes(app: FastifyInstance) {
     const existing = await db.card.findFirst({
       where: { name: body.name, setCode: body.setCode },
     });
-    if (existing) return reply.code(409).send({ error: "Esta carta ya existe en el catálogo", card: existing });
+    if (existing) {
+      return reply.code(409).send({ error: "Esta carta ya existe en el catálogo", card: existing });
+    }
 
-    const card = await db.card.create({ data: body });
+    const card = await db.card.create({
+      data: {
+        game: body.game,
+        name: body.name,
+        setCode: body.setCode,
+        setName: body.setName,
+        rarity: body.rarity,
+        imageUrl: body.imageUrl,
+        tcgplayerId: body.tcgplayerId,
+        scryfallId: body.scryfallId,
+        ygoprodeckId: body.ygoprodeckId,
+      },
+    });
     return reply.code(201).send(card);
   });
 }
